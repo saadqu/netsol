@@ -1,26 +1,44 @@
 import React from 'react';
-import logo from './logo.svg';
+import { useSelector } from 'react-redux';
+import { BrowserRouter, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
+import Feed from './Pages/Feed';
+import Login from './Pages/Login';
+import { State, StoreProvider } from './Store';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <StoreProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={
+            <RequireAuth>
+              <Feed />
+            </RequireAuth>
+          } />
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={
+            <Navigate to="/" />
+          } />
+        </Routes>
+      </BrowserRouter>
+    </StoreProvider>
   );
+}
+
+function RequireAuth({ children }: { children: JSX.Element }) {
+  
+  const token = useSelector((state: State) => state.auth.authToken)
+  const location = useLocation();
+  if (!token) {
+    // Redirect them to the /login page, but save the current location they were
+    // trying to go to when they were redirected. This allows us to send them
+    // along to that page after they login, which is a nicer user experience
+    // than dropping them off on the home page.
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
 }
 
 export default App;
